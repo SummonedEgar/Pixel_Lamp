@@ -166,9 +166,10 @@ void loop() {
 /////////////////IO END///////////////    
     
      if(mm_diff(i)>E) {
+      Serial.println("Ho una differenza");
       state[i]=1;
     } else {
-      skip_check=0;
+      state[i]=0;
     }
     }
   }   
