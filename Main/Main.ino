@@ -25,12 +25,21 @@ VL6180x sensor[N_Sensor] = {
   VL6180x(VL6180)  
 };
 
+struct Data {
+
+  uint8_t lux[N_Sensor] = {0,0,0,0,0};
+  uint8_t mm[N_Sensor] = {0,0,0,0,0};
+  uint8_t Hue[N_Sensor] = {0,0,0,0,0};  
+
+};
+
+typedef struct Data data;
+ 
 const uint8_t New_VL6180[ ]={0x2A,0x2B,0x2C,0x2D,0x2F};
 
 //WS2182
 CRGB leds[NUM_LEDS];
 
-uint8_t Hue = 0;
 uint8_t HueDelta = 3;
   
 void setup() { 
@@ -64,14 +73,20 @@ void setup() {
 }
 
 void loop() {
-  
-  for(int i=0;i<NUM_LEDS;i++) {
-
-    Hue += HueDelta;
-    leds[i].setHue(Hue);
-    FastLED.show();
-    FastLED.delay(1000 / FPS);
-  }
+ 
   
  
+}
+
+void update_strip () {
+  
+  for(int i=0;i<5;i++) {
+    for(int j=0;j<NUM_LEDS;j++) {
+
+    leds[(i+1)*j].setHue(data.);
+    FastLED.show();
+    FastLED.delay(1000 / FPS);
+
+    }
+  }
 }
