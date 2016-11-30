@@ -24,7 +24,7 @@
 #define LED_TYPE    WS2812
 #define COLOR_ORDER GRB
 #define LPF NUM_LEDS/N_Sensor
-#define FPS         100
+#define FPS         1
 
 //Typedef
 struct Data {
@@ -148,7 +148,7 @@ void setup() {
 void loop() {
 
   byte check;
-  
+  /*
   skip_check=0;
   
 /////////////////IO BEGIN//////////////
@@ -204,12 +204,21 @@ void loop() {
   
 
   }
-
+*/
   for(int i=0;i<N_Sensor;i++) {
     get_data(i);
     for(int j=0;j<LPF;j++) {
       Main.Hue[(i*LPF+j)]=Main.Hue[(i*LPF+j)]+H_Delta;
       update_led(i*LPF+j);
+      Serial.println("LED");
+      Serial.println(i*LPF+j);
+      Serial.println("Hue");
+      Serial.println(Main.Hue[(i*LPF+j)]);
+      
+      Serial.println("Sat");
+      Serial.println(Main.Sat[(i*LPF+j)]);
+      Serial.println("Val");
+      Serial.println(Main.Val[(i*LPF+j)]);
     }
   }
   
