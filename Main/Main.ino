@@ -4,6 +4,7 @@
 #include <math.h>
 
 #define A 0.301
+#define L0 60
 //VL6180
 #define PIN_0 2
 #define N_Sensor 5
@@ -65,7 +66,7 @@ void calculate_val ( int n_sensor) { //n_sensor from 0 to 4
   
   uint8_t luminosity;
   
-  luminosity = (double)((log(Main.lux[n_sensor]/ 20971+1)-1)/A)*255;
+  luminosity = (double)((log(Main.lux[n_sensor]/ 20971+1)/A-1)*(255-L0))+L0;
 
   for (int i=0; i<(NUM_LEDS/N_Sensor); i++) {
 
