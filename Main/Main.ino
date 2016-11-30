@@ -123,9 +123,7 @@ void setup() {
     
     delay(100);
     
-    if(sensor[i].VL6180xInit() != 0){
-      Serial.println("FAILED TO INITALIZE"); //Initialize device and check for errors
-    }
+    sensor[i].VL6180xInit() 
      
     sensor[i].VL6180xDefautSettings();
     delay(100);
@@ -153,7 +151,7 @@ void setup() {
 void loop() {
 
   byte check;
-  /*
+  
   skip_check=0;
   
 /////////////////IO BEGIN//////////////
@@ -168,6 +166,7 @@ void loop() {
 /////////////////IO END///////////////    
     
      if(mm_diff(i)>E) {
+      Serial.println("Ho Una Variazione");
       state[i]=1;
     } else {
       skip_check=1;
@@ -209,11 +208,12 @@ void loop() {
   
 
   }
-*/
+  for(int i=0;i<N_Sensor;i++){
+    get_data(i); 
+  }
+  
   for(int i=0;i<N_Sensor;i++) {
-    
-    get_data(i);
-    
+
     for(int j=0;j<LPF;j++) {
       
       Main.Hue[(i*LPF+j)]=Main.Hue[(i*LPF+j)]+H_Delta;
