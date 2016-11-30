@@ -123,7 +123,7 @@ void setup() {
     
     delay(100);
     
-    sensor[i].VL6180xInit() 
+    sensor[i].VL6180xInit(); 
      
     sensor[i].VL6180xDefautSettings();
     delay(100);
@@ -152,7 +152,7 @@ void loop() {
 
   byte check;
   
-  skip_check=0;
+  skip_check=1;
   
 /////////////////IO BEGIN//////////////
   if(millis()-t_running>300) { //Scan every 300 ms
@@ -166,38 +166,41 @@ void loop() {
 /////////////////IO END///////////////    
     
      if(mm_diff(i)>E) {
-      Serial.println("Ho Una Variazione");
       state[i]=1;
     } else {
-      skip_check=1;
+      skip_check=0;
     }
     }
   }   
     
-    if(skip_check!=1){
-     
+    if(skip_check==1){
+        Serial.println("Sto Facendo il ciclo");
     for(int i=0 ; i<N_Sensor; i++) {
       if (state[i]==1) { 
-
+        Serial.println("Ho controllato la variazione");
         update_Temp(i);
         check=1;
         t_running=millis();
         
         while(check==1){
-
+          Serial.println("Sono nel while");
           get_data(i);
           if(mm_diff(i)>E) {
+            Serial.println("Troppa Variazione");
             state[i]=0;
           } else if (millis()-t_running>1000) {
+            Serial.println("Ciclo Riuscito");
             check=2;
           }
         }
           delay(250);
           if(state[i]==0) {
+            Serial.println("Sto per uscire dal ciclo");
             check=0;
           } 
         
         if(check==2){
+          Serial.println("Spengo i led");
         for(int j=0 ; j<LPF; j++){
           Main.Val[(i*LPF+j)]=0;
           update_led(i*LPF+j);        
