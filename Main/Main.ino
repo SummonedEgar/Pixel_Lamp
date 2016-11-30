@@ -24,7 +24,7 @@
 #define LED_TYPE    WS2812
 #define COLOR_ORDER GRB
 #define LPF NUM_LEDS/N_Sensor
-#define FPS         1
+#define FPS         100
 
 //Typedef
 struct Data {
@@ -32,8 +32,8 @@ struct Data {
   uint8_t lux[N_Sensor] = {0,0,0,0,0};
   uint8_t mm[N_Sensor] = {0,0,0,0,0};
   uint8_t Hue[NUM_LEDS]= {0};  
-  uint8_t Sat[NUM_LEDS]= {255};  
-  uint8_t Val[NUM_LEDS]= {255};  
+  uint8_t Sat[NUM_LEDS] ;  
+  uint8_t Val[NUM_LEDS] ;  
 
 };
 
@@ -137,7 +137,12 @@ void setup() {
   //WS2182 Initialization
   
   FastLED.addLeds<LED_TYPE, DATA_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
-
+  for(int i=0;i<NUM_LEDS;i++) {
+    Main.Hue[i]=0;
+    Main.Sat[i]=255;
+    Main.Val[i]=255;
+    update_led(i);
+  }
   //Initialization
   t_running=millis();    //t=0
   
@@ -206,23 +211,18 @@ void loop() {
   }
 */
   for(int i=0;i<N_Sensor;i++) {
+    
     get_data(i);
+    
     for(int j=0;j<LPF;j++) {
+      
       Main.Hue[(i*LPF+j)]=Main.Hue[(i*LPF+j)]+H_Delta;
       update_led(i*LPF+j);
-      Serial.println("LED");
-      Serial.println(i*LPF+j);
-      Serial.println("Hue");
-      Serial.println(Main.Hue[(i*LPF+j)]);
+      delay(1000/FPS);
       
-      Serial.println("Sat");
-      Serial.println(Main.Sat[(i*LPF+j)]);
-      Serial.println("Val");
-      Serial.println(Main.Val[(i*LPF+j)]);
     }
   }
   
-  delay(1000/FPS);
 }
 
 
