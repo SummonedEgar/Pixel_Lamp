@@ -5,7 +5,7 @@
 
 #define L0 60
 #define E 50 //min diff actuation
-
+#define H_Delta 4
 //VL6180
 #define PIN_0 2
 #define N_Sensor 5
@@ -162,6 +162,8 @@ void loop() {
     
      if(mm_diff(i)>E) {
       state[i]=1;
+    } else {
+      skip_check=1;
     }
     }
   }   
@@ -201,6 +203,12 @@ void loop() {
 
   }
 
+  for(int i=0;i<N_Sensor;i++) {
+    for(int j=0;j<LPF;j++) {
+      Main.Hue[(i*LPF+j)]=Main.Hue[(i*LPF+j)]+H_Delta;
+      update_led(i*LPF+j);
+    }
+  }
   delay(1000/FPS);
 }
 
