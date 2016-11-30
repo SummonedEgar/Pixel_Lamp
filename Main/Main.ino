@@ -43,7 +43,7 @@ VL6180x sensor[N_Sensor] = {
   VL6180x(VL6180)  
 };
 
-const uint8_t New_VL6180[N_Sensor]={VL6180_0,VL6180_1,VL6180_2,VL6180_3,VL6180_4};
+uint8_t New_VL6180[N_Sensor]={VL6180_0,VL6180_1,VL6180_2,VL6180_3,VL6180_4};
 
 data Main; 
 
@@ -71,7 +71,9 @@ void calculate_val ( int n_sensor) { //n_sensor from 0 to 4
 }
 
 void setup() { 
-
+  
+  uint8_t a;
+  
   //VL6180 Initialization
   
   Serial.begin(115200); 
@@ -98,11 +100,10 @@ void setup() {
      
     sensor[i].VL6180xDefautSettings();
     delay(1000);
-    if(sensor[i].changeAddress(VL6180,New_VL6180[i])==New_VL6180[i]) {
-      Serial.println("Indirizzo cambiato");
-    } else {
-      Serial.println("Errore");
-    }
+    a=sensor[i].changeAddress(VL6180,New_VL6180[i]);
+    Serial.println("Indirizzo");
+    Serial.println(a);
+    
   }
 
   //WS2182 Initialization
