@@ -14,16 +14,7 @@
 #define COLOR_ORDER GRB
 #define FPS         100
 
-//Global variables
-//VL6180
-VL6180x sensor[N_Sensor] = {
-  VL6180x(VL6180),
-  VL6180x(VL6180),
-  VL6180x(VL6180),
-  VL6180x(VL6180),
-  VL6180x(VL6180)  
-};
-
+//Typedef
 struct Data {
 
   uint8_t lux[N_Sensor] = {0,0,0,0,0};
@@ -36,9 +27,22 @@ struct Data {
 
 typedef struct Data data;
 
-data Main; 
+//Global variables
+//VL6180
+VL6180x sensor[N_Sensor] = {
+  VL6180x(VL6180),
+  VL6180x(VL6180),
+  VL6180x(VL6180),
+  VL6180x(VL6180),
+  VL6180x(VL6180)  
+};
 
 const uint8_t New_VL6180[ ]={0x2A,0x2B,0x2C,0x2D,0x2F};
+
+
+
+data Main; 
+
 
 //WS2182
 CRGB leds[NUM_LEDS];
@@ -84,7 +88,11 @@ void setup() {
     digitalWrite((PIN_0+i),HIGH);
     sensor[i].VL6180xDefautSettings();
     delay(1000);
-    sensor[i].changeAddress(VL6180,New_VL6180[i]);
+    if(sensor[i].changeAddress(VL6180,New_VL6180[i])==New_VL6180[i]) {
+      Serial.println("Indirizzo cambiato");
+    } else {
+      Serial.println("Errore");
+    }
   }
   
   //WS2182 Initialization
