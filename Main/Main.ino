@@ -89,6 +89,11 @@ void setup() {
   for(int i=0;i<N_Sensor;i++) { //Setting the sensor and changing the address
     
     digitalWrite((PIN_0+i),HIGH);
+    
+    if(sensor[i].VL6180xInit() != 0){
+      Serial.println("FAILED TO INITALIZE"); //Initialize device and check for errors
+    }
+     
     sensor[i].VL6180xDefautSettings();
     delay(1000);
     if(sensor[i].changeAddress(VL6180,New_VL6180[i])==New_VL6180[i]) {
