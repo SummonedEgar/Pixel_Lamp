@@ -7,11 +7,11 @@
 
 #define VL6180 0x29
 
-#define VL6180_0 0x30
-#define VL6180_1 0x37
-#define VL6180_2 0x3D
-#define VL6180_3 0x45
-#define VL6180_4 0x4A
+#define VL6180_0 0x2B
+#define VL6180_1 0x2D
+#define VL6180_2 0x13
+#define VL6180_3 0x19
+#define VL6180_4 0x25
 
 //WS2182
 #define NUM_LEDS    30
@@ -89,6 +89,8 @@ void setup() {
   for(int i=0;i<N_Sensor;i++) { //Setting the sensor and changing the address
     
     digitalWrite((PIN_0+i),HIGH);
+    
+    delay(100);
     
     if(sensor[i].VL6180xInit() != 0){
       Serial.println("FAILED TO INITALIZE"); //Initialize device and check for errors
