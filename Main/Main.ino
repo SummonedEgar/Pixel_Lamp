@@ -32,8 +32,8 @@ struct Data {
   uint8_t lux[N_Sensor] = {0,0,0,0,0};
   uint8_t mm[N_Sensor] = {0,0,0,0,0};
   uint8_t Hue[NUM_LEDS]= {0};  
-  uint8_t Sat[NUM_LEDS]= {0};  
-  uint8_t Val[NUM_LEDS]= {0};  
+  uint8_t Sat[NUM_LEDS]= {255};  
+  uint8_t Val[NUM_LEDS]= {255};  
 
 };
 
