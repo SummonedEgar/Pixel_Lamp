@@ -115,7 +115,8 @@ void loop() {
     update_strip(i);
     
   }
-  
+
+  delay(1000/FPS);
 }
 
 
