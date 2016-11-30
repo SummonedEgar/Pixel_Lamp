@@ -53,7 +53,7 @@ void update_strip ( int led_num) {
 
 void calculate_val ( int n_sensor) { //n_sensor from 0 to 4
 
-  double luminosity=(Main.lux[n_sensor])/255; 
+  double luminosity= double (Main.lux[n_sensor]/64); 
   
   for (int i=0; i<(NUM_LEDS/N_Sensor); i++) {
 
@@ -95,11 +95,16 @@ void setup() {
 
 void loop() {
 
-  short H=0;
+  short H;
   
   for(int i=0 ; i<N_Sensor; i++) {
     
     Main.lux[i]=sensor[i].getAmbientLight(GAIN_1);
+    
+    Serial.println("Sensore Numero");
+    Serial.println(i);
+    Serial.println(sensor[i].getAmbientLight(GAIN_1));
+    
     Main.mm[i]=sensor[i].getDistance();
     
     calculate_val(i);
