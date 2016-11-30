@@ -148,7 +148,9 @@ void setup() {
 void loop() {
 
   byte check;
-
+  
+  skip_check=0;
+  
 /////////////////IO BEGIN//////////////
   if(millis()-t_running>300) { //Scan every 300 ms
     
@@ -182,15 +184,15 @@ void loop() {
           get_data(i);
           if(mm_diff(i)>E) {
             state[i]=0;
+          } else if (millis()-t_running>1000) {
+            check=2;
           }
+        }
           delay(250);
           if(state[i]==0) {
             check=0;
           } 
-          if(millis()-t_running>1000) {
-            check=2;
-          }
-        }
+        
         if(check==2){
         for(int j=0 ; j<LPF; j++){
           Main.Val[(i*LPF+j)]=0;
@@ -204,11 +206,13 @@ void loop() {
   }
 
   for(int i=0;i<N_Sensor;i++) {
+    get_data(i);
     for(int j=0;j<LPF;j++) {
       Main.Hue[(i*LPF+j)]=Main.Hue[(i*LPF+j)]+H_Delta;
       update_led(i*LPF+j);
     }
   }
+  
   delay(1000/FPS);
 }
 
