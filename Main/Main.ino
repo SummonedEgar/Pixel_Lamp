@@ -1,6 +1,9 @@
+#include <SparkFun_VL6180X.h>
 #include <FastLED.h>
 #include <Wire.h>
-#include <SparkFun_VL6180X.h>
+#include <math.h>
+
+#define A 0.301
 //VL6180
 #define PIN_0 2
 #define N_Sensor 5
@@ -59,9 +62,11 @@ void update_strip ( int led_num) {
 }
 
 void calculate_val ( int n_sensor) { //n_sensor from 0 to 4
-
-  double luminosity= double (Main.lux[n_sensor]/64); 
   
+  uint8_t luminosity;
+  
+  luminosity = (double)((log(Main.lux[n_sensor]/ 20971+1)-1)/A)*255;
+
   for (int i=0; i<(NUM_LEDS/N_Sensor); i++) {
 
     Main.Val[(i+1)*(n_sensor+1)]=luminosity;
@@ -71,8 +76,6 @@ void calculate_val ( int n_sensor) { //n_sensor from 0 to 4
 }
 
 void setup() { 
-  
-  uint8_t a;
   
   //VL6180 Initialization
   
@@ -99,10 +102,8 @@ void setup() {
     }
      
     sensor[i].VL6180xDefautSettings();
-    delay(1000);
-    a=sensor[i].changeAddress(VL6180,New_VL6180[i]);
-    Serial.println("Indirizzo");
-    Serial.println(a);
+    delay(100);
+    sensor[i].changeAddress(VL6180,New_VL6180[i]);
     
   }
 
