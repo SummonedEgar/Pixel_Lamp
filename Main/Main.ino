@@ -7,6 +7,12 @@
 
 #define VL6180 0x29
 
+#define VL6180_0 0x30
+#define VL6180_1 0x37
+#define VL6180_2 0x3D
+#define VL6180_3 0x45
+#define VL6180_4 0x4A
+
 //WS2182
 #define NUM_LEDS    30
 #define DATA_PIN    9 //led strip
@@ -37,12 +43,9 @@ VL6180x sensor[N_Sensor] = {
   VL6180x(VL6180)  
 };
 
-const uint8_t New_VL6180[ ]={0x2A,0x2B,0x2C,0x2D,0x2F};
-
-
+const uint8_t New_VL6180[N_Sensor]={VL6180_0,VL6180_1,VL6180_2,VL6180_3,VL6180_4};
 
 data Main; 
-
 
 //WS2182
 CRGB leds[NUM_LEDS];
@@ -94,7 +97,7 @@ void setup() {
       Serial.println("Errore");
     }
   }
-  
+
   //WS2182 Initialization
   
   FastLED.addLeds<LED_TYPE, DATA_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
