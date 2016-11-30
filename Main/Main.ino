@@ -6,6 +6,8 @@
 #define L0 60
 #define E 50 //min diff actuation
 #define H_Delta 4
+#define T_OFF 300
+
 //VL6180
 #define PIN_0 2
 #define N_Sensor 5
@@ -166,7 +168,6 @@ void loop() {
 /////////////////IO END///////////////    
     
      if(mm_diff(i)>E) {
-      Serial.println("Ho una differenza");
       state[i]=1;
     } else {
       state[i]=0;
@@ -175,40 +176,46 @@ void loop() {
   }   
     
     if(skip_check==1){
-        Serial.println("Sto Facendo il ciclo");
     for(int i=0 ; i<N_Sensor; i++) {
       if (state[i]==1) { 
-        Serial.println("Ho controllato la variazione");
         update_Temp(i);
         check=1;
         t_running=millis();
         
         while(check==1){
-          Serial.println("Sono nel while");
           get_data(i);
           if(mm_diff(i)>E) {
-            Serial.println("Troppa Variazione");
             state[i]=0;
-          } else if (millis()-t_running>1000) {
-            Serial.println("Ciclo Riuscito");
+          } else if (millis()-t_running>T_OFF) {
             check=2;
           }
         }
-          delay(250);
+          delay(T_OFF/4);
           if(state[i]==0) {
-            Serial.println("Sto per uscire dal ciclo");
             check=0;
           } 
         
         if(check==2){
-          Serial.println("Spengo i led");
-        for(int j=0 ; j<LPF; j++){
-          Main.Val[(i*LPF+j)]=0;
-          update_led(i*LPF+j);        
+         
+          if(Main.Val[i*LPF]!=0) {
+            
+            for(int j=0 ; j<LPF; j++){
+            
+            Main.Val[(i*LPF+j)]=0;
+            update_led(i*LPF+j);        
+            
+            }
+          } else {
+            for(int j=0 ; j<LPF; j++){
+            
+            Main.Val[(i*LPF+j)]=255;
+            update_led(i*LPF+j);        
+            
+            }
+          }
         }
       }
-    }
-    }
+     }
   
 
   }
