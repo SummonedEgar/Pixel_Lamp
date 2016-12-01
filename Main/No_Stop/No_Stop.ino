@@ -8,6 +8,7 @@
 #define H_Delta 4
 #define T_OFF 300
 #define T_Blink 400
+#define C0 6
 
 //VL6180
 #define PIN_0 2
@@ -119,17 +120,17 @@ void blink_led (int k, int a) {
   for(int i=0;i<k;i++) {
     for(int j=0;j<LPF;j++) {//OFF
               
-      Main.Val[k*LPF+j]=0;
-      update_led(k*LPF+j);
+      Main.Val[a*LPF+j]=0;
+      update_led(a*LPF+j);
             
     }
     delay(T_Blink);
     for(int j=0;j<LPF;j++) {//ON
               
-      Main.Hue[k*LPF+j]=0;
-      Main.Sat[k*LPF+j]=0;
-      Main.Val[k*LPF+j]=255;
-      update_led(k*LPF+j);
+      Main.Hue[a*LPF+j]=0;
+      Main.Sat[a*LPF+j]=0;
+      Main.Val[a*LPF+j]=255;
+      update_led(a*LPF+j);
             
     }
     delay(T_Blink);
@@ -188,9 +189,13 @@ void setup() {
 
 void loop() {
 
-  byte check;
-  byte i,j;
-
+  byte check=0;
+  byte check_2=0
+  byte i,j,count=0;
+  
+  if(check!=1) {
+  check=0;
+  }
   switch(Main.state[cycle]) {
     
     case 0: //Sensor measures 255
@@ -204,52 +209,83 @@ void loop() {
     Main.state[cycle]=stable_distance(cycle);
     t_running=millis();
     i=cycle;
-    
-    blink_led(3);
-    
-    if (millis()-t_running>1000) {
     break;
+    
     }
     
     case 2: //Hand is over the sensor
+
+    if(check!=1) {//Blink until ready
+    blink_led(2,cycle);
+    }
+    if(millis()-t_running>1500) { //Wait 1500 before capturing data
     
-    j=(i+1)%N_Sensor;
+    j=(i+1)%N_Sensor; //Cycle number of other sensors
+    check=1; //Stop blinking 
+    if(i-cycle<N_Sensor-1) { //Cycle through all other sensors
       
-    if(i-cycle<N_Sensor-1) {
-      
-      Main.state[j]=determine_state(j);
-      i++;
+      Main.state[j]=determine_state(j); //Check state
+      i++; //Move to other sensor
     }      
     
-    if(Main.state[j]==1) {
-        Main.state[i]=stable_distance(i);
-        if(Main.state[i]==2) {
-          while(Main.state[i]==2) {
+    if(Main.state[j]==1) { //Hand over sensor over 1500 ms
+        count += determine_state(j); //Start checking it's there
+        if(count>C0) { //It's there
+          Main.state[j]=2; //Hand stable
+          count=0; //Reset for other sensors
+        }
+    } else {
+      no_data++; //sum of no input sensors
+      Main.state[j]=0;
             
-            get_data();
-            for(int j=0;j<LPF;j++) {
-              
-              Main.Hue[cycle*LPF+j]=Main.mm[cycle];
-              update_led(cycle*LPF+j);
-            
-            }
-            delay(50);
-                     
-            Main.state[i]=determine_state(i);
-          } 
+    }
+    if (no_data==4) { //no hand over any other sensors
+      no_data=0;//reset
+      if (check_2==0){ //start counting time
+        prev_t=millis();
+        check_2=1;
+      }
+      if(Main.Val[cycle*LPF]==0) {
+        blink_led(2,cycle); //signal it's turning on
+                      
+        if(millis()-prev_t>2*T_BLINK) {
+          Main.face[cycle]=1; //face on
+          check_2=0; //reset
           break;
-        } else {
-          if(Main.Val[cycle*LPF]==0) {
-            Main.face[cycle]=1;
-          } else {
-            Main.face[cycle]=0;
-          }
-          
-          blink_led(3,cycle);
-          
-          Main.state[cycle]=4;
+        }
+      } else {
+         blink_led(1,cycle); //signal it's turning off
+                      
+         if(millis()-prev_t>T_BLINK) {
+         Main.face[cycle]=0; //face off
+         check_2=0; //reset
+         break;
+        }
+      }
+      Main.state[cycle]==0;
+      }   
+  
+      if(Main.state[j]==2) { 
+    
+        get_data();
+        for(int j=0;j<LPF;j++) {
+              
+          Main.Hue[cycle*LPF+j]=Main.mm[cycle];
+          update_led(cycle*LPF+j);
+            
+        }
+       delay(50);
+                     
+       Main.state[j]=determine_state(j);
+       if(Main.state[j]==0) {
+       get_data();
+       break;
+          } 
+     break;
+        ;
         } 
       }      
+    }
     }
   }
      
