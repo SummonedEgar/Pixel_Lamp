@@ -9,7 +9,7 @@
 #define T_OFF 300
 #define T_Blink 400
 #define C0 6
-#define increment 180/3.1452
+#define conversion 180/3.1452
 #define ratio 180/8
 #define symmetry 180/8
 #define dt 360/LPF
@@ -70,8 +70,9 @@ unsigned long timer_t=0;
 uint8_t cycle=0;
 uint8_t now_face=0;
 uint8_t led=0;
+uint8_t no_data=0;
 
-float t=0;
+uint16_t t=0;
 
 //WS2182
 CRGB leds[NUM_LEDS];
@@ -162,6 +163,17 @@ double absolute (double a) {
   }
 }
 
+void cpy(int New, int Old) {
+  
+  for(int i=0; i<LPF; i++) {
+    Main.Hue[Old*LPF+i]=Main.Hue[New*LPF+i];
+    Main.Sat[Old*LPF+i]=Main.Sat[New*LPF+i];
+    Main.Val[Old*LPF+i]=Main.Val[New*LPF+i];
+  }
+  Main.face[Old]=Main.face[New];
+  Main.facet[Old]=Main.facet[New];
+  
+}
 void setup() { 
   
   //VL6180 Initialization
@@ -191,7 +203,6 @@ void setup() {
     sensor[i].changeAddress(VL6180,New_VL6180[i]);
     
     get_data(i);
-    update_Temp(i);
     Main.state[i]=0;
     
   }
@@ -214,7 +225,7 @@ void setup() {
 void loop() {
 
   byte check=0;
-  byte check_2=0
+  byte check_2=0;
   byte i,j,count=0;
   byte lednum=0;
   
@@ -286,14 +297,14 @@ void loop() {
 
         case 2: //Hand stable over
 
-        Main.state[cycle]=determine.state(cycle);
+        Main.state[cycle]=determine_state(cycle);
         if (Main.state[cycle]==1) {
           
           Main.state[cycle]=2;
           Main.state[j]=determine_state(j);
           if(Main.state[j]==1) {
         
-          get_data();
+          get_data(cycle);
         
           for(int j=0;j<LPF;j++) { //Change led color based on distance
               
@@ -322,7 +333,7 @@ void loop() {
         if(Main.Val[cycle*LPF]==0) { //Turn Face on
         
         blink_led(2,cycle); //signal it's turning on              
-        if(millis()-prev_t>2*T_BLINK) {//Face On
+        if(millis()-prev_t>2*T_Blink) {//Face On
           blink_timer=millis();
           
           if(millis()-blink_timer>1000/FPS) {
@@ -343,7 +354,7 @@ void loop() {
           else { //Turn Face off
           
           blink_led(1,cycle); //signal it's turning off            
-          if(millis()-prev_t>T_BLINK) {
+          if(millis()-prev_t>T_Blink) {
             if(millis()-blink_timer>1000/FPS) {
               blink_timer=millis();
               Main.face[cycle]=0; //face off
@@ -433,7 +444,7 @@ void loop() {
       break;
   }
 
-  switch(Main.face[now_face] {
+  switch(Main.face[now_face]) {
 
     case 0: //Face Off
     
@@ -445,7 +456,7 @@ void loop() {
       if(millis()-led_timer>1000/FPS) {
         
         led_timer=millis();
-        now_face*LPF+led
+        now_face*LPF+led;
         switch(Main.facet[now_face]) {
         
         case 0: //Solid color
@@ -454,7 +465,7 @@ void loop() {
           break;
           
         case 1: //Breathing
-          leds[lednum]= Main.Val[lednum]*absolute((sen(t*conversion));
+          leds[lednum]= Main.Val[lednum]*absolute((sin(t*conversion)));
           led++;
           break;
 
@@ -464,7 +475,7 @@ void loop() {
           break;
         
         case 3: //Snake
-          leds[lednum]= Main.Val[lednum]*absolute((sen((t+dt)*conversion));
+          leds[lednum]= Main.Val[lednum]*absolute((sin((t+dt)*conversion)));
           led++;
           break;
         }
