@@ -9,6 +9,10 @@
 #define T_OFF 300
 #define T_Blink 400
 #define C0 6
+#define increment 180/3.1452
+#define ratio 180/8
+#define symmetry 180/8
+#define dt 360/LPF
 
 //VL6180
 #define PIN_0 2
@@ -56,14 +60,18 @@ VL6180x sensor[N_Sensor] = {
 uint8_t New_VL6180[N_Sensor]={0x2B,0x2D,0x19,0x13,0x25};
 
 data Main;
-data Temp;
 
 unsigned long t_running=0;
 unsigned long prev_t=0;
 unsigned long blink_timer=0;
+unsigned long led_timer=0;
+unsigned long timer_t=0;
 
-uint8_t state[N_Sensor]={0};
-byte cycle=0;
+uint8_t cycle=0;
+uint8_t now_face=0;
+uint8_t led=0;
+
+float t=0;
 
 //WS2182
 CRGB leds[NUM_LEDS];
@@ -73,13 +81,6 @@ void update_led ( int led_num) {
     
   leds[led_num].setHSV(Main.Hue[led_num],Main.Sat[led_num],Main.Val[led_num]); 
   FastLED.show();
-
-}
-
-void update_Temp(int i) {
-   
-  Temp.lux[i]=Main.lux[i];
-  Temp.mm[i]=Main.mm[i];
 
 }
 
@@ -143,6 +144,24 @@ void blink_led (int k, int a) {
 
 } 
 
+int pulse( int angle) {
+  if (angle<180-symmetry && angle >180-symmetry-ratio) {
+    return 1;
+  } else if (angle>180+symmetry && angle <180+symmetry+ratio) {
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+double absolute (double a) {
+  if(a>0) {
+    return (a);
+  } else {
+    return (-a);
+  }
+}
+
 void setup() { 
   
   //VL6180 Initialization
@@ -197,6 +216,7 @@ void loop() {
   byte check=0;
   byte check_2=0
   byte i,j,count=0;
+  byte lednum=0;
   
   if(check!=1) {
   check=0;
@@ -266,8 +286,12 @@ void loop() {
 
         case 2: //Hand stable over
 
-        Main.state[j]=determine_state(j);
-        if(Main.state[j]==1) {
+        Main.state[cycle]=determine.state(cycle);
+        if (Main.state[cycle]==1) {
+          
+          Main.state[cycle]=2;
+          Main.state[j]=determine_state(j);
+          if(Main.state[j]==1) {
         
           get_data();
         
@@ -280,12 +304,14 @@ void loop() {
           break;
         } else {
         
-        Main.state[cycle]=3;
-        get_data(cycle);
-        check=0;
-        break;
-       
-       }  
+          Main.state[cycle]=3;
+          get_data(cycle);
+          check=0;
+          break;
+          }
+        } else {
+          Main.state[cycle]=5;  
+        }
       
         if (no_data==4) { //no hand over any other sensors
           no_data=0;//reset
@@ -396,5 +422,63 @@ void loop() {
         cycle=(cycle+1)%N_Sensor;
         break;
       }
+    
+    case 5: //Copy face
+
+      cpy(j,cycle);
+      Main.state[cycle]=0;
+      cycle = (cycle+1)%N_Sensor;
+      j=0;
+      check=0;
+      break;
+  }
+
+  switch(Main.face[now_face] {
+
+    case 0: //Face Off
+    
+      led=0;
+      now_face= (now_face+1)%N_Sensor;
+      break;
+
+    case 1: //Face On
+      if(millis()-led_timer>1000/FPS) {
+        
+        led_timer=millis();
+        now_face*LPF+led
+        switch(Main.facet[now_face]) {
+        
+        case 0: //Solid color
+          update_led(lednum);
+          led++;
+          break;
+          
+        case 1: //Breathing
+          leds[lednum]= Main.Val[lednum]*absolute((sen(t*conversion));
+          led++;
+          break;
+
+        case 2: //Pulse 
+          leds[lednum]= Main.Val[lednum]*pulse(t);
+          led++;
+          break;
+        
+        case 3: //Snake
+          leds[lednum]= Main.Val[lednum]*absolute((sen((t+dt)*conversion));
+          led++;
+          break;
+        }
+
+    }
+  }
+  if(led==LPF){
+    led=0;
+    now_face= (now_face+1)%N_Sensor;
+          
+  }
+  if(millis()-timer_t>N_Sensor*1000/FPS) {
+    timer_t=millis();
+    t = (t+1)%360;
+  }
 }
       
