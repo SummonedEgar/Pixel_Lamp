@@ -1,8 +1,11 @@
+//Libraries
 #include <SparkFun_VL6180X.h>
 #include <FastLED.h>
 #include <Wire.h>
 #include <math.h>
+#include <EEPROM.h>
 
+//Costants
 #define L0 60
 #define E 150 //min diff actuation
 #define H_Delta 4
@@ -13,11 +16,11 @@
 #define ratio 180/8
 #define symmetry 180/8
 #define dt 360/LPF
+#define FPS         100
 
 //VL6180
 #define PIN_0 2
 #define N_Sensor 5
-
 #define VL6180 0x29
 
 //WS2182
@@ -26,7 +29,6 @@
 #define LED_TYPE    WS2812
 #define COLOR_ORDER GRB
 #define LPF NUM_LEDS/N_Sensor
-#define FPS         100
 
 //Typedef
 struct Data {
@@ -61,6 +63,7 @@ uint8_t New_VL6180[N_Sensor]={0x2B,0x2D,0x19,0x13,0x25};
 
 data Main;
 
+//Time variables
 unsigned long t_running=0;
 unsigned long prev_t=0;
 unsigned long blink_timer=0;
@@ -114,11 +117,19 @@ int stable_distance(int i) {//checks for persistency
           
     if(Main.mm[i]>E) { //not close anymore
         
-      return(0);
+      return 0;
         
-    } else if (millis()-t_running>T_OFF) {
-      return(2);  
-    }          
+    } 
+    else if (millis()-t_running>T_OFF) {
+      t_running=millis();
+      return 2;  
+    } 
+    else {
+      return 1;          
+    }
+  } 
+  else {
+    return 1;
   }
 }
 
@@ -174,6 +185,8 @@ void cpy(int New, int Old) {
   Main.facet[Old]=Main.facet[New];
   
 }
+
+/////////SETUP///////////
 void setup() { 
   
   //VL6180 Initialization
@@ -222,6 +235,7 @@ void setup() {
  
 }
 
+//////////MAIN///////////
 void loop() {
 
   byte check=0;
@@ -247,7 +261,6 @@ void loop() {
     case 1: //Something went over the sensor
     
     Main.state[cycle]=stable_distance(cycle);
-    t_running=millis();
     j=cycle;
     break;
         
@@ -491,5 +504,6 @@ void loop() {
     timer_t=millis();
     t = (t+1)%360;
   }
+  FastLED.show();
 }
       
