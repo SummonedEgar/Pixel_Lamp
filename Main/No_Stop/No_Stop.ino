@@ -217,7 +217,7 @@ void setup() {
     
     get_data(i);
     Main.state[i]=0;
-    Main.facet[i]=0;
+    Main.facet[i]=1;
     Main.face[i]=1;
   }
 
