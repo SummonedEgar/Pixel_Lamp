@@ -249,13 +249,6 @@ void loop() {
   if(check!=1) {
   check=0;
   }
-  Serial.print("Sto controllando il sensore");
-  Serial.println(cycle);
-  Serial.print("Il sensore ");
-  Serial.print(cycle);
-  Serial.print(" è nello stato");
-  Serial.print(Main.state[cycle]);
-  Serial.println("");
   
   switch(Main.state[cycle]) {
     
@@ -275,7 +268,7 @@ void loop() {
     Serial.println("ha rilevato una variazione");
     
     Main.state[cycle]=stable_distance(cycle);
-    j=cycle;
+    j=cycle+1;
     break;
         
     case 2: //Hand is over the sensor
