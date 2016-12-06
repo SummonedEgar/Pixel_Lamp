@@ -7,7 +7,7 @@
 
 //Costants
 #define L0 60
-#define E 150 //min diff actuation
+#define E 254 //min diff actuation
 #define H_Delta 4
 #define T_OFF 300
 #define T_Blink 400
@@ -240,7 +240,7 @@ void loop() {
 
   byte check=0;
   byte check_2=0;
-  byte i,j,count=0;
+  byte j,count=0;
   byte lednum=0;
   
   if(check!=1) {
@@ -272,16 +272,16 @@ void loop() {
       if(millis()-t_running>1500) { //Wait 1500 before capturing data
     
       check=1; //Stop blinking 
-      if(i-cycle<N_Sensor-1) { //Cycle through all other sensors
+      if(j-cycle<N_Sensor-1) { //Cycle through all other sensors
       
         Main.state[j]=determine_state(j); //Check state
-        //i++; //Move to other sensor
 
         switch(Main.state[j]) { //Change state with other sensors
         
         case 0:
         
           no_data++; //sum of no input sensors
+          j=(i+1)%N_Sensor;
           break;
 
         case 1: //Hand over sensor after 1500 ms
