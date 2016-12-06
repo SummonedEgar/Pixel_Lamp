@@ -217,7 +217,8 @@ void setup() {
     
     get_data(i);
     Main.state[i]=0;
-    
+    Main.facet[i]=0;
+    Main.face[i]=1;
   }
 
   //WS2182 Initialization
@@ -259,13 +260,20 @@ void loop() {
     break;
     
     case 1: //Something went over the sensor
+
+    Serial.print("Sensore numero ");
+    Serial.print(j);
+    Serial.println("ha rilevato una variazione");
     
     Main.state[cycle]=stable_distance(cycle);
     j=cycle;
     break;
         
     case 2: //Hand is over the sensor
-
+      
+      Serial.print("Sensore numero ");
+      Serial.print(j);
+      Serial.println("ha una mano stabile davanti");
       if(check!=1) {//Blink until ready
         blink_led(2,cycle);
         }
@@ -281,7 +289,7 @@ void loop() {
         case 0:
         
           no_data++; //sum of no input sensors
-          j=(i+1)%N_Sensor;
+          j=(j+1)%N_Sensor;
           break;
 
         case 1: //Hand over sensor after 1500 ms
@@ -299,7 +307,7 @@ void loop() {
             }          
           } else if(Main.state[j]==0) { //Hand has left
             
-            j=(i+1)%N_Sensor; //Number of other sensors
+            j=(j+1)%N_Sensor; //Number of other sensors
             break;
           
           }
