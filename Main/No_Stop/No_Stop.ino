@@ -233,6 +233,8 @@ void setup() {
   
   //Initialization
   t_running=millis();    //t=0
+  cycle=0;
+  Serial.println("Inizializzazione Finita");
  
 }
 
@@ -247,7 +249,8 @@ void loop() {
   if(check!=1) {
   check=0;
   }
-  
+  Serial.print("Sto controllando il sensore");
+  Serial.println(cycle);
   switch(Main.state[cycle]) {
     
     case 0: //Sensor measures 255
