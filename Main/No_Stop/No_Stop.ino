@@ -74,6 +74,7 @@ uint8_t cycle=0;
 uint8_t now_face=0;
 uint8_t led=0;
 uint8_t no_data=0;
+uint8_t c_exit=0;
 
 uint16_t t=0;
 
@@ -243,7 +244,8 @@ void loop() {
 
   byte check=0;
   byte check_2=0;
-  byte j,count=0;
+  byte j,tmp,count=0;
+
   byte lednum=0;
   
   if(check!=1) {
@@ -336,16 +338,19 @@ void loop() {
             update_led(cycle*LPF+i);
             
           }
+          Main.state[j]=2;
           break;
         } else {
         
           Main.state[cycle]=3;
           get_data(cycle);
           check=0;
+          t_running=millis();
           break;
           }
         } else {
           Main.state[cycle]=5;  
+          t_running=millis();
         }
       
         if (no_data==4) { //no hand over any other sensors
@@ -409,6 +414,17 @@ void loop() {
 
       Main.state[cycle]=determine_state(cycle);
       if(Main.state[cycle]=1) {
+        if(t_running-millis()>300) {
+          if(Main.mm-tmp<30) {
+            c_exit++;
+          }
+          tmp=Main.mm[cycle];
+          t_running=millis();
+        }
+        if(c_exit>5) {
+          Main.state[cycle]=4;
+          break;
+        }
         
         get_data(cycle);
         
@@ -421,7 +437,6 @@ void loop() {
         Main.state[cycle]=3;
         break;
       } else {
-        Main.state[cycle]=4;
         break;
       }
     case 4: //Change mode
@@ -434,22 +449,22 @@ void loop() {
           if(Main.mm<157) {
             if(Main.mm<108) {
               if(Main.mm<59) {
-                Main.facet[cycle]=1;
+                Main.facet[cycle]=0;
                 break;
               } else {
-                Main.facet[cycle]=2;
+                Main.facet[cycle]=1;
                 break;
               }
             } else {
-              Main.facet[cycle]=3;
+              Main.facet[cycle]=2;
               break;
             }
           } else {
-            Main.facet[cycle]=4;
+            Main.facet[cycle]=3;
             break;
           } 
         } else{
-          Main.facet[cycle]=5;
+          Main.facet[cycle]=4;
           break;
         } 
       } else {
