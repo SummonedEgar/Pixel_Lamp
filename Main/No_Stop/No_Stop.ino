@@ -251,6 +251,11 @@ void loop() {
   }
   Serial.print("Sto controllando il sensore");
   Serial.println(cycle);
+  Serial.print("Il sensore");
+  Serial.print(cycle);
+  Serial.print("è nello stato");
+  Serial.print(Main.state[cycle]);
+  Serial.println("");
   switch(Main.state[cycle]) {
     
     case 0: //Sensor measures 255
