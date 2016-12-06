@@ -407,7 +407,7 @@ void loop() {
       Main.state[cycle]=determine_state(cycle);
       if(Main.state[cycle]=1) {
         if(t_running-millis()>300) {
-          if(Main.mm[cycle]-tmp<30) {
+          if(int(Main.mm[cycle]-tmp)<30) {
             Serial.println("Mano Stabile");
             c_exit++;
           }
@@ -416,6 +416,7 @@ void loop() {
         }
         if(c_exit>5) {
           c_exit=0;
+          blink_led(2,cycle);
           Main.state[cycle]=4;
           break;
         }
