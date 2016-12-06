@@ -328,12 +328,12 @@ void loop() {
           Main.state[j]=determine_state(j);
           if(Main.state[j]==1) {
         
-          get_data(cycle);
+          get_data(j);
         
-          for(int j=0;j<LPF;j++) { //Change led color based on distance
+          for(int i=0;i<LPF;i++) { //Change led color based on distance
               
-            Main.Hue[cycle*LPF+j]=Main.mm[cycle];
-            update_led(cycle*LPF+j);
+            Main.Hue[cycle*LPF+i]=Main.mm[j];
+            update_led(cycle*LPF+i);
             
           }
           break;
