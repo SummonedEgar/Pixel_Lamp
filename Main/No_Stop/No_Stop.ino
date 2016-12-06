@@ -422,6 +422,7 @@ void loop() {
           t_running=millis();
         }
         if(c_exit>5) {
+          c_exit=0;
           Main.state[cycle]=4;
           break;
         }
