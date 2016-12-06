@@ -412,6 +412,10 @@ void loop() {
             c_exit++;
           }
           t_running=millis();
+          Serial.println("Main valore:");
+          Serial.println(Main.mm[cycle]);
+          Serial.println("tmp valore:");
+          Serial.println(tmp);
           tmp=Main.mm[cycle];
         }
         if(c_exit>5) {
