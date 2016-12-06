@@ -282,7 +282,7 @@ void loop() {
       if(millis()-t_running>1500) { //Wait 1500 before capturing data
     
       check=1; //Stop blinking 
-      if(j-cycle<N_Sensor-1) { //Cycle through all other sensors
+      
       
         Main.state[j]=determine_state(j); //Check state
 
@@ -304,6 +304,7 @@ void loop() {
             if(count>C0) { //It's there
               Main.state[j]=2; //Hand stable
               count=0; //Reset for other sensors
+              j=(j+1)%N_Sensor;
               break;
           
             }          
@@ -400,7 +401,7 @@ void loop() {
         
       }
 
-      } 
+       
       } else {
         break;
       }
