@@ -419,9 +419,8 @@ void loop() {
           Serial.println(tmp);
           tmp=Main.mm[cycle];
         }
-        if(c_exit>5) {
+        if(c_exit>10) {
           c_exit=0;
-          blink_led(2,cycle);
           Main.state[cycle]=4;
           break;
         }
