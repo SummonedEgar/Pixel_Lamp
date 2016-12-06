@@ -245,8 +245,6 @@ void loop() {
   byte check=0;
   byte check_2=0;
   byte j,tmp,count=0;
-
-  byte lednum=0;
   
   if(check!=1) {
   check=0;
@@ -414,9 +412,11 @@ void loop() {
 
       Main.state[cycle]=determine_state(cycle);
       if(Main.state[cycle]=1) {
+        
         if(t_running-millis()>300) {
           if(Main.mm-tmp<30) {
             c_exit++;
+            Serial.println("Mano stabile");
           }
           tmp=Main.mm[cycle];
           t_running=millis();
@@ -500,22 +500,22 @@ void loop() {
         switch(Main.facet[now_face]) {
         
         case 0: //Solid color
-          update_led(lednum);
+          update_led(led);
           led++;
           break;
           
         case 1: //Breathing
-          leds[lednum]= Main.Val[lednum]*absolute((sin(t*conversion)));
+          leds[led]= Main.Val[led]*absolute((sin(t*conversion)));
           led++;
           break;
 
         case 2: //Pulse 
-          leds[lednum]= Main.Val[lednum]*pulse(t);
+          leds[led]= Main.Val[led]*pulse(t);
           led++;
           break;
         
         case 3: //Snake
-          leds[lednum]= Main.Val[lednum]*absolute((sin((t+dt)*conversion)));
+          leds[led]= Main.Val[led]*absolute((sin((t+dt)*conversion)));
           led++;
           break;
         }
