@@ -76,6 +76,7 @@ uint8_t led=0;
 uint8_t lednum=0;
 uint8_t no_data=0;
 uint8_t c_exit=0;
+uint8_t tmp=0;
 
 uint16_t t=0;
 
@@ -245,7 +246,7 @@ void loop() {
 
   byte check=0;
   byte check_2=0;
-  byte j,tmp,count=0;
+  byte j,count=0;
   
   if(check!=1) {
   check=0;
