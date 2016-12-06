@@ -73,6 +73,7 @@ unsigned long timer_t=0;
 uint8_t cycle=0;
 uint8_t now_face=0;
 uint8_t led=0;
+uint8_t lednum=0;
 uint8_t no_data=0;
 uint8_t c_exit=0;
 
@@ -245,8 +246,6 @@ void loop() {
   byte check=0;
   byte check_2=0;
   byte j,tmp,count=0;
-
-  byte lednum=0;
   
   if(check!=1) {
   check=0;
@@ -264,10 +263,6 @@ void loop() {
     break;
     
     case 1: //Something went over the sensor
-
-    Serial.print("Sensore numero ");
-    Serial.print(j);
-    Serial.println("ha rilevato una variazione");
     
     Main.state[cycle]=stable_distance(cycle);
     j=cycle+1;
@@ -275,9 +270,6 @@ void loop() {
         
     case 2: //Hand is over the sensor
       
-      Serial.print("Sensore numero ");
-      Serial.print(j);
-      Serial.println("ha una mano stabile davanti");
       if(check!=1) {//Blink until ready
         blink_led(2,cycle);
         }
@@ -415,7 +407,7 @@ void loop() {
       Main.state[cycle]=determine_state(cycle);
       if(Main.state[cycle]=1) {
         if(t_running-millis()>300) {
-          if(Main.mm-tmp<30) {
+          if(Main.mm[cycle]-tmp<30) {
             Serial.println("Mano Stabile");
             c_exit++;
           }
