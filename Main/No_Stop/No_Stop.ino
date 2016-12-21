@@ -8,7 +8,6 @@
 //Costants
 #define L0 60
 #define E 254 //min diff actuation
-#define H_Delta 4
 #define T_OFF 300
 #define T_Blink 400
 #define C0 6
@@ -65,18 +64,17 @@ data Main;
 
 //Time variables
 unsigned long t_running=0;
-unsigned long prev_t=0;
-unsigned long blink_timer=0;
-unsigned long led_timer=0;
 unsigned long timer_t=0;
+unsigned long wait=0;
 
 uint8_t cycle=0;
-uint8_t now_face=0;
 uint8_t led=0;
 uint8_t lednum=0;
 uint8_t no_data=0;
-uint8_t c_exit=0;
+uint8_t prev_facet=0;
 uint8_t tmp=0;
+uint8_t j,count;
+uint8_t now_face=0;
 
 uint16_t t=0;
 
@@ -113,6 +111,7 @@ int determine_state (int i) {
 int stable_distance(int i) {//checks for persistency 
 
 ///////////DO NOT CALL t_running=millis() BEFORE THIS FUNCTION//////////
+///////////USE ONCE FOR EACH STATE///////////
 
   if(millis()-t_running>T_OFF/4) {      
             
@@ -127,39 +126,13 @@ int stable_distance(int i) {//checks for persistency
       t_running=millis();
       return 2;  
     } 
-    else {
-      return 1;          
-    }
-  } 
-  else {
-    return 1;
   }
+  return 1;
 }
 
-void blink_led (int k, int a) {
-
-  for(int i=0;i<k;i++) {
-    for(int j=0;j<LPF;j++) {//OFF
-              
-      Main.Val[a*LPF+j]=0;
-      update_led(a*LPF+j);
-            
-    }
-    delay(T_Blink);
-    for(int j=0;j<LPF;j++) {//ON
-              
-      Main.Hue[a*LPF+j]=0;
-      Main.Sat[a*LPF+j]=0;
-      Main.Val[a*LPF+j]=255;
-      update_led(a*LPF+j);
-            
-    }
-    delay(T_Blink);
-  } 
-
-} 
 
 int pulse( int angle) {
+  
   if (angle<180-symmetry && angle >180-symmetry-ratio) {
     return 1;
   } else if (angle>180+symmetry && angle <180+symmetry+ratio) {
@@ -167,9 +140,10 @@ int pulse( int angle) {
   } else {
     return 0;
   }
+
 }
 
-double absolute (double a) {
+int absolute (int a) {
   if(a>0) {
     return (a);
   } else {
@@ -205,7 +179,11 @@ void setup() {
   }
   
    delay(500);
-   
+  
+  //WS2182 Initialization
+  
+  FastLED.addLeds<LED_TYPE, DATA_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
+     
   for(int i=0;i<N_Sensor;i++) { //Setting the sensor and changing the address
     
     digitalWrite((PIN_0+i),HIGH);
@@ -220,19 +198,18 @@ void setup() {
     
     get_data(i);
     Main.state[i]=0;
-    Main.facet[i]=1;
-    Main.face[i]=1;
+    Main.facet[i]=EEPROM.read(i);
+    Main.face[i]=EEPROM.read(i+N_Sensor);
+    
+    for(int k=0;k<LPF;k++) {
+      Main.Hue[i*LPF+k]=EEPROM.read(i+2*N_Sensor);
+      Main.Sat[i*LPF+k]=EEPROM.read(i+3*N_Sensor);
+      Main.Val[i*LPF+k]=EEPROM.read(i+4*N_Sensor);
+      update_led(i);
+    }
   }
 
-  //WS2182 Initialization
-  
-  FastLED.addLeds<LED_TYPE, DATA_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
-  for(int i=0;i<NUM_LEDS;i++) {
-    Main.Hue[i]=0;
-    Main.Sat[i]=255;
-    Main.Val[i]=255;
-    update_led(i);
-  }
+
   
   //Initialization
   t_running=millis();    //t=0
@@ -243,242 +220,189 @@ void setup() {
 
 //////////MAIN///////////
 void loop() {
-
-  byte check=0;
-  byte check_2=0;
-  byte j,count=0;
-  
-  if(check!=1) {
-  check=0;
-  }
   
   switch(Main.state[cycle]) {
     
     case 0: //Sensor measures 255
-  
+    
     Main.state[cycle]=determine_state(cycle);
     if(Main.state[cycle]==0) {
       cycle = (cycle+1)%N_Sensor;
+    } 
+    else {
+      t_running=millis();
     }
-    t_running=millis();
     break;
     
     case 1: //Something went over the sensor
     
     Main.state[cycle]=stable_distance(cycle);
-    j=cycle+1;
+    if(Main.state[cycle]==2) {
+      j=(cycle+1)%N_Sensor;
+      prev_facet=Main.facet[cycle];
+      Main.facet[cycle]=2; //Blink
+      t_running=millis();
+      wait=t_running;
+      no_data=0;
+    }
     break;
         
     case 2: //Hand is over the sensor
       
-      if(check!=1) {//Blink until ready
-        blink_led(2,cycle);
-        }
-      if(millis()-t_running>1500) { //Wait 1500 before capturing data
-    
-      check=1; //Stop blinking 
+    if(millis()-wait>1500) { //Wait 1500 before capturing data
       
-      
-        Main.state[j]=determine_state(j); //Check state
-
-        switch(Main.state[j]) { //Change state with other sensors
-        
-        case 0:
-        
-          no_data++; //sum of no input sensors
-          j=(j+1)%N_Sensor;
-          break;
-
-        case 1: //Hand over sensor after 1500 ms
-          if(millis()-prev_t>100) {
-          Main.state[j]=determine_state(j);
-          count += Main.state[j]; //Start checking it's there
-          prev_t=millis();
-          
-          if(Main.state[j]==1) {
-            if(count>C0) { //It's there
-              Main.state[j]=2; //Hand stable
-              count=0; //Reset for other sensors
-              j=(j+1)%N_Sensor;
-              break;
-          
-            }          
-          } else if(Main.state[j]==0) { //Hand has left
+      Main.facet[cycle]=prev_facet; //Stop blinking
             
-            j=(j+1)%N_Sensor; //Number of other sensors
-            break;
-          
-          }
-          } else {
-            break;
-          
-          }
-
-        case 2: //Hand stable over
-
+      switch(Main.state[j]) { //Change state with other sensors
+        
+      case 0:
+        
         Main.state[cycle]=determine_state(cycle);
-        if (Main.state[cycle]==1) {
-          
-          Main.state[cycle]=2;
-          Main.state[j]=determine_state(j);
-          if(Main.state[j]==1) {
+        if(Main.state[cycle]==0) {
         
-          get_data(j);
-        
-          for(int i=0;i<LPF;i++) { //Change led color based on distance
-              
-            Main.Hue[cycle*LPF+i]=Main.mm[j];
-            update_led(cycle*LPF+i);
-            
-          }
-          Main.state[j]=2;
-          break;
-        } else {
-        
-          Main.state[cycle]=3;
-          get_data(cycle);
-          check=0;
+          Main.state[cycle]=5;
           t_running=millis();
-          break;
-          }
-        } else {
-          Main.state[cycle]=5;  
-          t_running=millis();
-        }
-      
-        if (no_data==4) { //no hand over any other sensors
-          no_data=0;//reset
-          if (check_2==0){ //start counting time
-            prev_t=millis();
-            check_2=1;
-          }
-        if(Main.Val[cycle*LPF]==0) { //Turn Face on
-        
-        blink_led(2,cycle); //signal it's turning on              
-        if(millis()-prev_t>2*T_Blink) {//Face On
-          blink_timer=millis();
-          
-          if(millis()-blink_timer>1000/FPS) {
-            blink_timer=millis();
-            Main.face[cycle]=1; //face on
-            check_2=0; //reset
-            check=0;
-            cycle = (cycle+1)%N_Sensor;
-            Main.state[cycle]==0; //Sensor cleared
-            break;
-          } else {
-            break;
-          }
-        } else {
-          break;
-        }
-      }
-          else { //Turn Face off
-          
-          blink_led(1,cycle); //signal it's turning off            
-          if(millis()-prev_t>T_Blink) {
-            if(millis()-blink_timer>1000/FPS) {
-              blink_timer=millis();
-              Main.face[cycle]=0; //face off
-              check_2=0; //reset
-              check=0;
-              cycle = (cycle+1)%N_Sensor;
-              Main.state[cycle]==0; //Sensor cleared
-              break;
-            } else {
-              break;
-            }
-          } else { 
-            break;
-          }
-          
-        }
-          }   
-        default:
-        break;
-        
-      }
-
-       
-      } else {
-        break;
-      }
-    case 3: //Change luminosity
-
-      Main.state[cycle]=determine_state(cycle);
-      if(Main.state[cycle]=1) {
-        if(t_running-millis()>300) {
-          if(absolute(Main.mm[cycle]-tmp)<30) {
-            Serial.println("Mano Stabile");
-            c_exit++;
-          }
-          t_running=millis();
-          Serial.println("Main valore:");
-          Serial.println(Main.mm[cycle]);
-          Serial.println("tmp valore:");
-          Serial.println(tmp);
-          tmp=Main.mm[cycle];
-        }
-        if(c_exit>10) {
-          c_exit=0;
-          Main.state[cycle]=4;
-          break;
-        }
-        
-        get_data(cycle);
-        
-        for(int j=0;j<LPF;j++) { //Change led color based on distance
-              
-          Main.Val[cycle*LPF+j]=Main.mm[cycle];
-          update_led(cycle*LPF+j);
-            
-        }
-        Main.state[cycle]=3;
-        break;
-      } else {
-        break;
-      }
-    case 4: //Change mode
-
-      Main.state[cycle]=determine_state(cycle);
-      if (Main.state[cycle]==1) {
-        get_data(cycle);
-        Main.state[cycle]=4;
-        if(Main.mm<209) {
-          if(Main.mm<157) {
-            if(Main.mm<108) {
-              if(Main.mm<59) {
-                Main.facet[cycle]=0;
-                break;
-              } else {
-                Main.facet[cycle]=1;
-                break;
-              }
-            } else {
-              Main.facet[cycle]=2;
-              break;
-            }
-          } else {
-            Main.facet[cycle]=3;
-            break;
-          } 
-        } else{
-          Main.facet[cycle]=4;
           break;
         } 
-      } else {
-        Main.state[cycle]=0;
-        cycle=(cycle+1)%N_Sensor;
+        else {
+          Main.state[cycle]=2;
+        }
+        
+        Main.state[j]=determine_state(j); //Check state
+        if(Main.state[j]==0) {  
+          no_data++; //sum of no input sensors
+          if(no_data==4) {
+            Main.face[cycle]=(Main.face[cycle]+1)%2; //turn on off and viceversa
+            Main.state[cycle]=0;
+            cycle=(cycle+1)%N_Sensor;
+            break;
+          }
+          j=(j+1)%N_Sensor;
+          if(j==cycle) {
+            j=(cycle+1)%N_Sensor;
+          }
+          
+        } 
+        else { //Hand over sensor
+          count=0;
+          t_running=millis();
+        }
         break;
-      }
+
+        case 1: //Hand over sensor after 1500 ms
+        
+        if(millis()-t_running>200) {
+            
+          tmp=Main.mm[j];
+          t_running=millis();
+          
+          if(absolute(tmp-Main.mm[j])<10) {    
+            count++;
+            
+            if(count>10) {
+              Main.state[cycle]=3;
+              prev_facet=Main.facet[cycle];
+              Main.facet[cycle]=2;
+              count=0;
+              t_running=millis();
+              wait=t_running;
+              break;
+            }
+          } 
+          else {
+            count=0;
+          }
+          }
+          get_data(j);
+          
+          for(int i=0;i<LPF;i++) { //Change led color based on distance
+            Main.Hue[cycle*LPF+i]=Main.mm[j];
+            update_led(cycle*LPF+i);
+          }
+       
+    }
+    }
+    break;
+    
+    case 3: //Change luminosity
+    if(millis()-wait>1000) {
+      
+      Main.facet[cycle]=prev_facet;
+      
+      if(millis()-t_running>200) {
+            
+          tmp=Main.mm[j];
+          t_running=millis();
+          
+          if(absolute(tmp-Main.mm[j])<10) {    
+            count++;
+            
+            if(count>10) {
+              Main.state[cycle]=4;
+              prev_facet=Main.facet[cycle];
+              Main.facet[cycle]=2;
+              count=0;
+              t_running=millis();
+              wait=t_running;
+              break;
+            }
+          } 
+          else {
+            count=0;
+          }
+          }
+    get_data(j);
+       
+          
+    for(int i=0;i<LPF;i++) { //Change led color based on distance
+      Main.Val[cycle*LPF+i]=Main.mm[j];
+      update_led(cycle*LPF+i);
+    }
+    }
+    break; 
+    
+    case 4: //Change mode
+    
+    if(millis()-wait>1000) {
+
+    
+    if(millis()-t_running>200) {
+            
+          tmp=Main.mm[j];
+          t_running=millis();
+          
+          if(absolute(tmp-Main.mm[j])<10) {    
+            count++;
+            
+            if(count>10) {
+              Main.state[cycle]=0;
+              cycle=(cycle+1)%N_Sensor;
+              count=0;
+              t_running=millis();
+              wait=t_running;
+              break;
+            }
+          } 
+          else {
+            count=0;
+          }
+          }
+    
+    get_data(cycle);
+
+    Main.facet[cycle]=(int)(Main.mm[cycle]/63);
+    
+    } 
+    else {
+      Main.facet[cycle]=2;
+    }
+    break;
     
     case 5: //Copy face
 
       cpy(j,cycle);
       Main.state[cycle]=0;
       cycle = (cycle+1)%N_Sensor;
-      j=0;
-      check=0;
       break;
   }
 
@@ -491,45 +415,48 @@ void loop() {
       break;
 
     case 1: //Face On
-      if(millis()-led_timer>1000/FPS) {
         
-        led_timer=millis();
-        now_face*LPF+led;
         switch(Main.facet[now_face]) {
         
         case 0: //Solid color
           update_led(lednum);
-          led++;
           break;
           
         case 1: //Breathing
           leds[lednum]= Main.Val[lednum]*absolute((sin(t*conversion)));
-          led++;
           break;
 
         case 2: //Pulse 
           leds[lednum]= Main.Val[lednum]*pulse(t);
-          led++;
           break;
         
         case 3: //Snake
           leds[lednum]= Main.Val[lednum]*absolute((sin((t+dt)*conversion)));
-          led++;
           break;
-        }
+        
 
     }
   }
-  if(led==LPF){
-    led=0;
-    now_face= (now_face+1)%N_Sensor;
-          
-  }
-  if(millis()-timer_t>N_Sensor*1000/FPS) {
+
+  if(millis()-timer_t>1000/FPS) {
+    
     timer_t=millis();
     t = (t+1)%360;
-  }
-  lednum=now_face*LPF+led;
+    led=(led+1)%NUM_LEDS;
+    
+    if(led==0){
+    now_face= (now_face+1)%N_Sensor;
+    }
+    
+    lednum=now_face*LPF+led;
+    
+      EEPROM.update(cycle,Main.facet[cycle]);  
+      EEPROM.update(cycle+N_Sensor,Main.face[cycle]);
+      EEPROM.update(cycle+2*N_Sensor,Main.Hue[cycle*LPF]);
+      EEPROM.update(cycle+3*N_Sensor,Main.Sat[cycle*LPF]);
+      EEPROM.update(cycle+4*N_Sensor,Main.Val[cycle*LPF]);  
+    }
+  
+  
   FastLED.show();
 }
-      
